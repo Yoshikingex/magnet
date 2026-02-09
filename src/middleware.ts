@@ -4,38 +4,43 @@ export const config = {
   matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
 }
 
+function unauthorizedResponse() {
+  return new NextResponse('Unauthorized', {
+    status: 401,
+    headers: {
+      'WWW-Authenticate': 'Basic realm="Magnet Admin"',
+      'X-Content-Type-Options': 'nosniff',
+      'X-Frame-Options': 'DENY',
+    },
+  })
+}
+
 export function middleware(request: NextRequest) {
   const authHeader = request.headers.get('authorization')
 
   if (!authHeader || !authHeader.startsWith('Basic ')) {
-    return new NextResponse('Unauthorized', {
-      status: 401,
-      headers: {
-        'WWW-Authenticate': 'Basic realm="Magnet Admin"',
-        'X-Content-Type-Options': 'nosniff',
-        'X-Frame-Options': 'DENY',
-        'X-XSS-Protection': '1; mode=block',
-        'Referrer-Policy': 'strict-origin-when-cross-origin',
-        'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
-      },
-    })
+    return unauthorizedResponse()
   }
 
   const base64Credentials = authHeader.split(' ')[1]
-  let credentials: string
-
-  try {
-    credentials = atob(base64Credentials)
-  } catch {
-    return new NextResponse('Invalid credentials', {
-      status: 401,
-      headers: {
-        'WWW-Authenticate': 'Basic realm="Magnet Admin"',
-      },
-    })
+  if (!base64Credentials) {
+    return unauthorizedResponse()
   }
 
-  const [username, password] = credentials.split(':')
+  let decoded: string
+  try {
+    decoded = atob(base64Credentials)
+  } catch {
+    return unauthorizedResponse()
+  }
+
+  // パスワードに ":" が含まれる可能性があるため、最初の ":" のみで分割
+  const colonIndex = decoded.indexOf(':')
+  if (colonIndex === -1) {
+    return unauthorizedResponse()
+  }
+  const username = decoded.slice(0, colonIndex)
+  const password = decoded.slice(colonIndex + 1)
 
   const validUser = process.env.BASIC_AUTH_USER
   const validPass = process.env.BASIC_AUTH_PASS
@@ -46,17 +51,11 @@ export function middleware(request: NextRequest) {
   }
 
   if (username !== validUser || password !== validPass) {
-    return new NextResponse('Invalid credentials', {
-      status: 401,
-      headers: {
-        'WWW-Authenticate': 'Basic realm="Magnet Admin"',
-      },
-    })
+    return unauthorizedResponse()
   }
 
   const response = NextResponse.next()
 
-  // セキュリティヘッダー
   response.headers.set('X-Content-Type-Options', 'nosniff')
   response.headers.set('X-Frame-Options', 'DENY')
   response.headers.set('X-XSS-Protection', '1; mode=block')
