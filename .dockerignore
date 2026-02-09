@@ -1,0 +1,8 @@
+node_modules
+.next
+data/*.db
+data/*.png
+.env.local
+*.log
+nul
+datarankings-test.json
