@@ -36,9 +36,13 @@ WORKDIR /app
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 
+# 起動スクリプトをコピー
+COPY start.sh ./
+RUN chmod +x start.sh
+
 # データディレクトリを作成
 RUN mkdir -p /app/data
 
 EXPOSE 3000
 
-CMD ["node", "server.js"]
+CMD ["./start.sh"]
