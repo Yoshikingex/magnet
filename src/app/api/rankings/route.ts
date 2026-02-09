@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Error fetching rankings:', error)
     return NextResponse.json(
-      { error: 'Failed to fetch rankings' },
+      { error: 'Internal server error' },
       { status: 500 }
     )
   }

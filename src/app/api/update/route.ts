@@ -151,7 +151,6 @@ export async function POST() {
       {
         success: false,
         message: 'データ取得に失敗しました',
-        error: error instanceof Error ? error.message : 'Unknown error',
       },
       { status: 500 }
     )

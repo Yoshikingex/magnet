@@ -19,7 +19,7 @@ export async function GET() {
   } catch (error) {
     console.error('Error fetching agencies:', error)
     return NextResponse.json(
-      { error: 'Failed to fetch agencies' },
+      { error: 'Internal server error' },
       { status: 500 }
     )
   }
